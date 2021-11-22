@@ -1,8 +1,14 @@
 from urllib.request import urlopen
 from bs4 import BeautifulSoup
 import requests
+import time
+
 
 urls = []
+headlines = []
+articles = []
+url_as_key ={} #saving articles as value, url as key
+
 response = requests.get('http://www.bbc.co.uk/news')
 doc = BeautifulSoup(response.text, 'html.parser')
 
@@ -12,77 +18,47 @@ def get_headlines():
 
     for headline in headlines:
         print(headline.text)
+        headlines.append(headline.text)
 
+
+#Using the ['href] attribute we recieve the url, without the website(bbc.com,google.com,etc. to fill this gap, I added this func.
+def create_url(website,link):
+    newlink = ""
+    newlink += website
+    newlink += str(link)
+    new_url = newlink
+    return new_url
+
+
+
+#note: there's a limited amount of web entries before BBC blocks login attempt. Adding sleep to try prevent block.
 
 def get_content():
 
-    website = "bbc.com"
+    website = "http://bbc.com"
     links = doc.find_all('a', { 'class': 'gs-c-promo-heading' })
     for link in links:
-        char = '"'
-        urls.append(link)
-        new_url = char + website + link + char
-        response = requests.get(new_url)
-        text = ' '.join(BeautifulSoup(response.text, 'html.parser').stripped_strings)
+        urls.append(create_url(website,link['href']))
+    for link in links:
+        new_url = create_url(website, link['href'])
+        response2 = requests.get(new_url)
+        text = ' '.join(BeautifulSoup(response2.text, 'html.parser').stripped_strings)
         print(text)
+        articles.append(text)
+        time.sleep(5) #waiting x amount of seconds to prevent blocking
 
 
 
 
-get_content()
+def url_to_articles():
+    for i in range(len(urls)):
+        url_as_key[urls[i]] = articles[i]
+
+
+print(urls)
+print(articles)
+url_to_articles()
+print(url_as_key)
 
 
 
-
-#testing the bbc base url + link
-
-def test():
-    char = '"'
-    website = "bbc.com"
-    link = "/news/world-us-canada-59369492"
-    new_link = char + website + link + char
-    print(new_link)
-
-
-
-
-
-
-"""
-    text = ' '.join(BeautifulSoup(response.text, 'html.parser').stripped_strings)
-    print(text)
-    
-    
-        # kill all script and style elements
-    for script in soup(["script", "style"]):
-        script.extract()  # rip it out
-
-    # get text
-    text = soup.get_text()
-
-    # break into lines and remove leading and trailing space on each
-    lines = (line.strip() for line in text.splitlines())
-    # break multi-headlines into a line each
-    chunks = (phrase.strip() for line in lines for phrase in line.split("  "))
-    # drop blank lines
-    text = '\n'.join(chunk for chunk in chunks if chunk)
-
-    print(text)
-    
-    
-headlines = doc.find_all('h3')
-
-for headline in headlines:
-    print(headline.text)
-
-links = doc.find_all('a', { 'class': 'gs-c-promo-heading' })
-
-for link in links:
-    print(link.text)
-
-links = doc.find_all('a', { 'class': 'gs-c-promo-heading' })
-
-for link in links:
-    print(link.text)
-    print(link['href'])
-"""
