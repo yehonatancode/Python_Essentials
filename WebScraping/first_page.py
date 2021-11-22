@@ -5,7 +5,7 @@ import time
 
 
 urls = []
-headlines = []
+all_headlines = []
 articles = []
 url_as_key ={} #saving articles as value, url as key
 
@@ -18,7 +18,8 @@ def get_headlines():
 
     for headline in headlines:
         print(headline.text)
-        headlines.append(headline.text)
+        all_headlines.append(headline.text)
+        time.sleep(0.1)
 
 
 #Using the ['href] attribute we recieve the url, without the website(bbc.com,google.com,etc. to fill this gap, I added this func.
@@ -30,22 +31,27 @@ def create_url(website,link):
     return new_url
 
 
-
 #note: there's a limited amount of web entries before BBC blocks login attempt. Adding sleep to try prevent block.
-
+#the function raises an exception. hence, we'll use a try/except/finally approach
 def get_content():
 
     website = "http://bbc.com"
     links = doc.find_all('a', { 'class': 'gs-c-promo-heading' })
     for link in links:
         urls.append(create_url(website,link['href']))
-    for link in links:
-        new_url = create_url(website, link['href'])
-        response2 = requests.get(new_url)
-        text = ' '.join(BeautifulSoup(response2.text, 'html.parser').stripped_strings)
-        print(text)
-        articles.append(text)
-        time.sleep(5) #waiting x amount of seconds to prevent blocking
+    try:
+        for link in links:
+            new_url = create_url(website, link['href'])
+            response2 = requests.get(new_url)
+            text = ' '.join(BeautifulSoup(response2.text, 'html.parser').stripped_strings)
+            print(text)
+            articles.append(text)
+            time.sleep(1)  # waiting x amount of seconds to prevent blocking
+    except Exception as e:
+        print("Connection error,", e.__class__, "occurred.")
+    finally:
+        url_to_articles()
+        print(url_as_key)
 
 
 
@@ -55,10 +61,7 @@ def url_to_articles():
         url_as_key[urls[i]] = articles[i]
 
 
-print(urls)
-print(articles)
-url_to_articles()
-print(url_as_key)
+get_content()
 
 
 
